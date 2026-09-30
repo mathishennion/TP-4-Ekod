@@ -1,0 +1,38 @@
+services:
+  db:
+    build:
+      context: ./db-init
+    environment:
+      POSTGRES_USER: ekod
+      POSTGRES_PASSWORD: ekod
+      POSTGRES_DB: tasks
+      TZ: Europe/Paris
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ekod -d tasks"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./Tasks-API-main/Tasks-API-main
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: tasks
+      DB_USER: ekod
+      DB_PASSWORD: ekod
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
